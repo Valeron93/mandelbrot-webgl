@@ -24,7 +24,7 @@ void main() {
 
 const fragSrc = `
 precision highp float;
-
+const int maxIterations = 350;
 varying vec2 v_texCoord;
 
 vec2 complexPow2(vec2 number){
@@ -34,20 +34,40 @@ vec2 complexPow2(vec2 number){
 	);
 }
 
-float mandelbrot(vec2 coord){
-    const int maxIterations = 400;
-    vec2 z = vec2(0,0);
-	for(int i = 0; i < maxIterations; i++){
+vec3 hsv2rgb(vec3 c)
+{
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+float mandelbrot(vec2 coord) {
+    
+    vec2 z = vec2(0.0, 0.0);
+
+	for(int i = 0; i < maxIterations; i++) {
 		z = complexPow2(z) + coord;
-		if(length(z) > 2.0) return float(i)/float(maxIterations);
+		if (length(z) > 2.0) {
+            return float(i) / float(maxIterations);
+        }
 	}
-	return float(maxIterations);
+
+	return 1.0;
 }
 
 void main() {
     vec2 coord = 2.0 * v_texCoord - vec2(1.5, 1.0);
-    float color = mandelbrot(coord);
-    gl_FragColor = vec4(1.0 - color);
+    float iter = mandelbrot(coord);
+
+    float hue = iter;
+    float saturation = 1.0;
+    float value = iter == 1.0 ? 0.0 : 1.0 ;
+
+    vec3 hsv = vec3(hue, saturation, value);
+
+    vec3 rgb = hsv2rgb(hsv);
+
+    gl_FragColor = vec4(rgb, 1.0);
 }
 `;
 
